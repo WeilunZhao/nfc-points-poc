@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Web NFC Demo — Read Tag & Send to Server</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <h2>Web NFC Demo</h2>
+  <p>Open on an Android device with NFC and Chrome / Edge. Tap a tag to read.</p>
+  <label>Server URL: <input id="server" value="http://10.0.2.2:3000"></label><br/>
+  <label>Action:
+    <select id="action">
+      <option value="add">Add</option>
+      <option value="redeem">Redeem</option>
+    </select>
+  </label><br/>
+  <label>Amount: <input id="amount" value="1" type="number"></label><br/>
+  <button id="start">Start NFC Scan</button>
+  <pre id="log"></pre>
+
+  <script>
+    const log = v => { document.getElementById('log').textContent += v + "\n"; }
+
+    document.getElementById('start').addEventListener('click', async () => {
+      if(!('NDEFReader' in window)) {
+        alert('Web NFC not supported in this browser.');
+        return;
+      }
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        log('Listening for NFC tags... Touch a tag now.');
+
+        ndef.onreading = async (ev) => {
+          log('Tag read.');
+          const decoder = new TextDecoder();
+          let token = null;
+          for(const record of ev.message.records) {
+            if(record.recordType === 'text') {
+              token = decoder.decode(record.data);
+            }
+          }
+          if(!token) {
+            log('No text token found in tag.');
+            return;
+          }
+          log('Token: ' + token);
+
+          const server = document.getElementById('server').value;
+          const action = document.getElementById('action').value;
+          const amount = document.getElementById('amount').value;
+
+          const resp = await fetch(server + '/nfc/scan', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ token, action, amount })
+          });
+          const data = await resp.json();
+          log('Server response: ' + JSON.stringify(data));
+        };
+      } catch (err) {
+        log('Error: ' + err);
+      }
+    });
+  </script>
+</body>
+</html>

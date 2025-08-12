@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Admin — NFC PoC</title></head>
+<body>
+  <h2>Admin / Test UI</h2>
+  <div>
+    <h3>Create user</h3>
+    <input id="name" placeholder="name"/>
+    <button id="create">Create</button>
+    <pre id="out"></pre>
+  </div>
+  <div>
+    <h3>Generate Token & Bind</h3>
+    <input id="userId" placeholder="userId"/>
+    <button id="gen">Generate & Bind</button>
+    <pre id="genout"></pre>
+  </div>
+  <div>
+    <h3>Get Points</h3>
+    <input id="qUser" placeholder="userId"/>
+    <button id="getp">Get</button>
+    <pre id="pointsout"></pre>
+  </div>
+
+  <script>
+    const server = location.origin;
+    document.getElementById('create').onclick = async () => {
+      const name = document.getElementById('name').value;
+      const r = await fetch(server + '/user/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name})});
+      document.getElementById('out').textContent = await r.text();
+    };
+    document.getElementById('gen').onclick = async () => {
+      const userId = document.getElementById('userId').value;
+      const r = await fetch(server + '/nfc/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({userId})});
+      document.getElementById('genout').textContent = await r.text();
+    };
+    document.getElementById('getp').onclick = async () => {
+      const u = document.getElementById('qUser').value;
+      const r = await fetch(server + '/points/' + u);
+      document.getElementById('pointsout').textContent = await r.text();
+    };
+  </script>
+</body>
+</html>
